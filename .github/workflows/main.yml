@@ -1,0 +1,65 @@
+name: High Performance Linux Desktop (Noble)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: تحديث النظام وتثبيت بيئة LXQt
+      run: |
+        sudo apt update
+        # تثبيت الحزم الأساسية + حزم تشغيل الرسوم (lib*) لتحسين الجودة
+        sudo apt install -y lxqt-core lxqt-about lxqt-admin \
+        lxqt-config lxqt-globalkeys lxqt-notificationd \
+        lxqt-openssh-askpass lxqt-panel lxqt-policykit \
+        lxqt-powermanagement lxqt-qtplugin lxqt-runner \
+        lxqt-session lxqt-sudo lxqt-themes pcmanfm-ql qterminal \
+        firefox \
+        libgl1-mesa-dri libxrender1 libxcursor1 libxrandr2 libxi6 libxext6 libxfixes3
+
+    - name: تثبيت VNC و Websockify
+      run: |
+        sudo apt install -y x11vnc novnc
+        sudo apt install -y python3-pip
+        pip3 install websockify
+
+    - name: إعداد كلمة مرور VNC
+      run: |
+        mkdir -p ~/.vnc
+        x11vnc -storepasswd 123456 ~/.vnc/passwd
+
+    - name: تشغيل النظام بجودة عالية (1080p)
+      run: |
+        # 1. تشغيل الشاشة بجودة عالية
+        export DISPLAY=:1
+        Xvfb :1 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 &
+        sleep 5
+        
+        # 2. تشغيل سطح المكتب LXQt
+        startlxqt > /dev/null 2>&1 &
+        sleep 8
+        
+        # 3. تشغيل VNC
+        x11vnc -display :1 -forever -shared -rfbauth ~/.vnc/passwd -rfbport 5900 \
+               -nocursorshape -nocursorpos -cursorarrow > /dev/null 2>&1 &
+        
+        # 4. تشغيل noVNC
+        websockify --web=/usr/share/novnc 8787 localhost:5900 > /dev/null 2>&1 &
+        
+        echo "تم تشغيل النظام بجودة 1080p."
+        sleep 5
+
+    - name: تشغيل Ngrok
+      env:
+        NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+      run: |
+        wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
+        unzip -q ngrok-v3-stable-linux-amd64.zip
+        ./ngrok config add-authtoken $NGROK_TOKEN
+        ./ngrok http 8787 --log=stdout &
+
+    - name: إبقاء الجلسة مفتوحة
+      run: while true; do sleep 300; done
