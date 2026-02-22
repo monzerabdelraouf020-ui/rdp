@@ -1,4 +1,4 @@
-name: High Performance Linux Desktop (Noble)
+name: High Performance Linux Desktop (Final)
 
 on:
   workflow_dispatch:
@@ -11,13 +11,13 @@ jobs:
     - name: تحديث النظام وتثبيت بيئة LXQt
       run: |
         sudo apt update
-        # تثبيت الحزم الأساسية + حزم تشغيل الرسوم (lib*) لتحسين الجودة
+        # تثبيت LXQt + البرامج الأساسية + مكتبات الجرافيكس لتحسين الأداء
         sudo apt install -y lxqt-core lxqt-about lxqt-admin \
         lxqt-config lxqt-globalkeys lxqt-notificationd \
         lxqt-openssh-askpass lxqt-panel lxqt-policykit \
         lxqt-powermanagement lxqt-qtplugin lxqt-runner \
-        lxqt-session lxqt-sudo lxqt-themes pcmanfm-ql qterminal \
-        firefox \
+        lxqt-session lxqt-sudo lxqt-themes \
+        pcmanfm-qt qterminal firefox \
         libgl1-mesa-dri libxrender1 libxcursor1 libxrandr2 libxi6 libxext6 libxfixes3
 
     - name: تثبيت VNC و Websockify
@@ -31,11 +31,11 @@ jobs:
         mkdir -p ~/.vnc
         x11vnc -storepasswd 123456 ~/.vnc/passwd
 
-    - name: تشغيل النظام بجودة عالية (1080p)
+    - name: تشغيل النظام بجودة 4K (أقصى دقة)
       run: |
-        # 1. تشغيل الشاشة بجودة عالية
+        # 1. تشغيل الشاشة بدقة 4K (3840x2160) لجودة عالية جداً
         export DISPLAY=:1
-        Xvfb :1 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 &
+        Xvfb :1 -screen 0 3840x2160x24 -ac +extension GLX +render -noreset > /dev/null 2>&1 &
         sleep 5
         
         # 2. تشغيل سطح المكتب LXQt
@@ -49,7 +49,7 @@ jobs:
         # 4. تشغيل noVNC
         websockify --web=/usr/share/novnc 8787 localhost:5900 > /dev/null 2>&1 &
         
-        echo "تم تشغيل النظام بجودة 1080p."
+        echo "تم تشغيل النظام بدقة 4K."
         sleep 5
 
     - name: تشغيل Ngrok
